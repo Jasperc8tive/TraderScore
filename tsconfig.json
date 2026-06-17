@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "files": [],
+  "references": [
+    { "path": "packages/shared" },
+    { "path": "packages/config" },
+    { "path": "packages/logging" },
+    { "path": "packages/events" },
+    { "path": "packages/database" },
+    { "path": "packages/auth" },
+    { "path": "packages/core" }
+  ]
+}

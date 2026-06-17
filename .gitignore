@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+.pnp/
+.pnp.js
+
+# Build output
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# Turbo
+.turbo/
+
+# Env & secrets — NEVER commit real secrets
+.env
+.env.local
+.env.*.local
+*.pem
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Test / coverage
+coverage/
+.nyc_output/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+
+# Docker volumes (local data)
+.docker-data/

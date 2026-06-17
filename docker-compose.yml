@@ -1,0 +1,107 @@
+# =============================================================================
+# TradeScore — local-first development environment.
+#
+#   docker compose up            # start postgres, redis, api, web
+#   docker compose watch         # same, with live source sync (hot reload)
+#
+# Hot reload uses Compose's `develop.watch` (Docker Compose 2.22+) to sync host
+# source into the running containers. This avoids bind-mounting over the pnpm
+# workspace's node_modules, which keeps dependency resolution intact.
+#
+# All configuration is env-driven (see .env.example) so the same images run
+# unchanged against AWS RDS/ElastiCache later (cloud-ready, no refactor).
+# =============================================================================
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-tradescore}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tradescore_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-tradescore}
+    ports:
+      # Host-published port is decoupled from the container-internal port so a
+      # local port conflict (e.g. another Postgres on 5432) is resolved by
+      # setting POSTGRES_HOST_PORT without affecting container networking.
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tradescore} -d ${POSTGRES_DB:-tradescore}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${REDIS_HOST_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/api.Dockerfile
+      target: dev
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: development
+      POSTGRES_HOST: postgres
+      REDIS_HOST: redis
+    ports:
+      - "${API_PORT:-4000}:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    develop:
+      watch:
+        - action: sync
+          path: ./apps/api/src
+          target: /app/apps/api/src
+        - action: sync
+          path: ./packages
+          target: /app/packages
+        - action: rebuild
+          path: ./apps/api/package.json
+        - action: rebuild
+          path: ./pnpm-lock.yaml
+
+  web:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/web.Dockerfile
+      target: dev
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: development
+      # Server components reach the API over the Docker network; the browser uses
+      # the public URL from .env (NEXT_PUBLIC_API_URL).
+      INTERNAL_API_URL: http://api:4000
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    depends_on:
+      - api
+    develop:
+      watch:
+        - action: sync
+          path: ./apps/web/src
+          target: /app/apps/web/src
+        - action: rebuild
+          path: ./apps/web/package.json
+
+volumes:
+  postgres_data:
+  redis_data:
