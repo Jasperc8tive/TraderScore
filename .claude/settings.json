@@ -6,7 +6,13 @@
       "PowerShell($env:DATABASE_URL=$null; pnpm db:migrate 2>&1 | Select-Object -Last 25)",
       "PowerShell(Write-Output \"DATABASE_URL in this shell: $env:DATABASE_URL\"; Write-Output \"--- migrate ---\"; pnpm db:migrate 2>&1 | Select-Object -Last 20)",
       "PowerShell(pnpm --filter @tradescore/database migrate:status 2>&1)",
-      "PowerShell(pnpm db:seed 2>&1)"
+      "PowerShell(pnpm db:seed 2>&1)",
+      "Bash(pnpm db:seed:pilot)",
+      "Bash(jq --version)",
+      "Bash(node scripts/demo.mjs)",
+      "Bash(curl -s -o /tmp/disc.html -w \"HTTP %{http_code}, %{size_download} bytes\\\\n\" http://localhost:3000/discover)",
+      "Bash(curl -s -o /tmp/biz.html -w \"HTTP %{http_code}, %{size_download} bytes\\\\n\" http://localhost:3000/business/premier-foods-discovery)",
+      "Bash(echo \"EXIT: $?\")"
     ]
   }
 }
