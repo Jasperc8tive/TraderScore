@@ -1,10 +1,29 @@
 #!/usr/bin/env node
 import { join } from "node:path";
+import { config as loadDotenv } from "dotenv";
 import { loadConfig } from "@tradescore/config";
 import { createLogger } from "@tradescore/logging";
 import { Database } from "./pool";
 import { Migrator } from "./migrator";
 import { runSeeds, runPilotSeed } from "./seed";
+
+/**
+ * Load the repository-root `.env` for host-run usage. Migrations and seeds are
+ * run from the host (see README), where — unlike inside Docker Compose, which
+ * injects `env_file` values — nothing populates `process.env`. `override: true`
+ * makes the project's committed local config authoritative over stale, unrelated
+ * machine-level variables. If the project `.env` does not define `DATABASE_URL`,
+ * drop any inherited one so a global `DATABASE_URL` from another project on the
+ * same machine cannot hijack the local connection. The path resolves to the repo
+ * root from both `src/` (tsx) and compiled `dist/` (same depth).
+ */
+const dotenvResult = loadDotenv({
+  path: join(__dirname, "..", "..", "..", ".env"),
+  override: true,
+});
+if (!dotenvResult.parsed?.DATABASE_URL) {
+  delete process.env.DATABASE_URL;
+}
 
 /**
  * Database CLI: `tradescore-db <migrate|status|seed>`.

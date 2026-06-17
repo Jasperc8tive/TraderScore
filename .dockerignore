@@ -1,0 +1,68 @@
+# =============================================================================
+# Docker build context exclusions.
+#
+# The build context is the repository ROOT (see docker-compose.yml). Without
+# these exclusions, `COPY . .` would copy the host-installed node_modules into
+# the image. Those modules were resolved on the host platform (Windows) with a
+# host-specific pnpm store layout, so an in-container `pnpm install` detects a
+# mismatched modules directory and tries to purge it — which fails in a
+# non-interactive build with:
+#   ERR_PNPM_ABORTED_REMOVE_MODULES_DIR_NO_TTY
+#
+# Excluding node_modules lets pnpm install cleanly from the committed lockfile.
+# It also massively shrinks the context (faster builds) and keeps secrets out
+# of the image.
+# =============================================================================
+
+# Dependencies — must be installed fresh inside the image for the target platform
+node_modules
+**/node_modules
+.pnp
+.pnp.js
+
+# Build output — produced inside the image, never copied from host
+dist
+build
+.next
+out
+*.tsbuildinfo
+
+# Turbo cache
+.turbo
+**/.turbo
+
+# Env & secrets — provided at runtime via compose `env_file`, never baked in
+.env
+.env.local
+.env.*.local
+*.pem
+
+# Test / coverage
+coverage
+.nyc_output
+
+# VCS & CI
+.git
+.gitignore
+.github
+
+# Docker / compose files (not needed inside the image)
+**/*.Dockerfile
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Editor / OS
+.vscode
+.DS_Store
+Thumbs.db
+*.swp
+
+# Logs
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Local data volumes
+.docker-data

@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(env)",
+      "PowerShell(Write-Output \"User scope:    $\\([System.Environment]::GetEnvironmentVariable\\('DATABASE_URL','User'\\)\\)\"; Write-Output \"Machine scope: $\\([System.Environment]::GetEnvironmentVariable\\('DATABASE_URL','Machine'\\)\\)\"; Write-Output \"Process scope: $\\([System.Environment]::GetEnvironmentVariable\\('DATABASE_URL','Process'\\)\\)\")",
+      "PowerShell($env:DATABASE_URL=$null; pnpm db:migrate 2>&1 | Select-Object -Last 25)",
+      "PowerShell(Write-Output \"DATABASE_URL in this shell: $env:DATABASE_URL\"; Write-Output \"--- migrate ---\"; pnpm db:migrate 2>&1 | Select-Object -Last 20)",
+      "PowerShell(pnpm --filter @tradescore/database migrate:status 2>&1)",
+      "PowerShell(pnpm db:seed 2>&1)"
+    ]
+  }
+}
